@@ -1,0 +1,28 @@
+---
+- name: force handlers
+  meta: flush_handlers
+
+- name: Kubeadm init
+  command: kubeadm init --pod-network-cidr={{kube_pod_network_cidr}} --token={{kube_token}} --token-ttl {{kube_token_ttl}} --apiserver-advertise-address={{kube_api_server}} creates=/etc/kubernetes/admin.conf
+
+- name: apply path "{{ item.path }}"
+  command: kubectl apply -f "{{ item.path }}" chdir="/tmp/{{ item.repo | basename }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  with_items: "{{ kube_apply_repos }}"
+
+- name: Add Kube API server options
+  lineinfile:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    line: '    - {{item.option}}={{item.value}}'
+    regexp: '^    - {{item.option}}='
+    insertafter: '    - kube-apiserver'
+  notify: restart kubeapi
+  with_items: "{{ kube_apiserver_options }}"
+
+- copy:
+    dest: /etc/profile.d/kube.sh
+    content: "export KUBECONFIG=/etc/kubernetes/admin.conf"
+
+- name: force handlers
+  meta: flush_handlers

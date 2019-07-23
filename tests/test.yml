@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  roles:
+    - role: my-ansible-k8s-golden-img
+      kube_apiserver_options:
+      - {option: "--insecure-port", value: "8080"}
+      - {option: "--service-node-port-range", value: "80-32767"}

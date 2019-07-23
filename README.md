@@ -1,1 +1,0 @@
-# my-ansible-k8s-golden-img
